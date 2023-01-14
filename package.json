@@ -1,0 +1,49 @@
+{
+  "type": "module",
+  "name": "hackolade-test-task",
+  "version": "1.0.0",
+  "description": "Hackolade | Test task | Cassandra",
+  "main": "src/index.ts",
+  "engines": {
+    "node": ">=16 <=18",
+    "npm": ">=7 <9"
+  },
+  "scripts": {
+    "lint:fs": "ls-lint",
+    "lint:type": "npx tsc --noEmit",
+    "lint:js": "npx eslint \"src/**/*.ts\"",
+    "lint": "npm run lint:fs && npm run lint:js && npm run lint:type",
+    "clean": "rimraf build",
+    "build": "npm run clean && tsc && tsc-alias -p tsconfig.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/v0ldemar01/hackolade-test-task.git"
+  },
+  "author": "Volodymyr Minchenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/v0ldemar01/hackolade-test-task/issues"
+  },
+  "homepage": "https://github.com/v0ldemar01/hackolade-test-task#readme",
+  "dependencies": {
+    "dotenv": "16.0.3"
+  },
+  "devDependencies": {
+    "@ls-lint/ls-lint": "1.11.2",
+    "@types/node": "18.11.18",
+    "@typescript-eslint/eslint-plugin": "5.48.1",
+    "eslint": "8.31.0",
+    "eslint-plugin-import": "2.27.4",
+    "lint-staged": "13.1.0",
+    "simple-git-hooks": "2.8.1",
+    "ts-node": "10.9.1",
+    "tsc-alias": "1.8.2",
+    "tsconfig-paths": "4.1.2",
+    "typescript": "4.9.4"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  }
+}
