@@ -1,0 +1,1 @@
+export { type ICassandraColumn } from './column.model-type.js';

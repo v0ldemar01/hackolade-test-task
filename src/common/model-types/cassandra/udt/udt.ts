@@ -1,0 +1,1 @@
+export { type IUserDefinedType } from './udt.model-type.js';

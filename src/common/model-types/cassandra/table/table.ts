@@ -1,0 +1,1 @@
+export { type ICassandraTable } from './table.model-type.js';

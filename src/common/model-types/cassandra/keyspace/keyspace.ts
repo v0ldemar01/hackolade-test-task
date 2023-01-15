@@ -1,0 +1,1 @@
+export { type ICassandraKeyspace } from './keyspace.model-type.js';
