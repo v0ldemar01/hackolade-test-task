@@ -29,7 +29,7 @@ class Cassandra {
 
   getTableColumnsWithUsedUdts = async (tableName: string): Promise<{
     columns: ICassandraColumn[];
-    udts: ICassandraUserDefinedType[]
+    usedUdts: ICassandraUserDefinedType[]
   }> => {
     const columns = await this.getColumnsByTableName(tableName);
     const availableUdts = await this.getUdts();
@@ -38,7 +38,7 @@ class Cassandra {
         .find(({ type }) => type.includes(typeName)));
     return {
       columns,
-      udts: usedUdts,
+      usedUdts,
     };
   };
 }

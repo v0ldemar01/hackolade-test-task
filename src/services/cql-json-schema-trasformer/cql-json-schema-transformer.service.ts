@@ -5,18 +5,19 @@ import {
   CQLBasicDataType,
   JSONSchemaDataType,
   CQLCollectionDataType,
-} from '~/common/enums/enums';
+} from '~/common/enums/enums.js';
 import {
   ICassandraColumn,
   ICassandraUserDefinedType,
-} from '~/common/model-types/model-types';
+} from '~/common/model-types/model-types.js';
+import { getFullUrl } from '~/helpers/helpers.js';
 import {
   CQLParser as CQLParserService,
-} from '~/services/services.js';
+} from '~/services/cql-parser/cql-parser.service.js';
 import {
   JSON_SCHEMA_USED_DIALECT,
   MIN_ARRAY_ITEMS,
-} from './common/constants';
+} from './common/constants.js';
 
 interface ICQLJSONSchemaTransformerConstructor {
   cqlParserService: CQLParserService;
@@ -34,28 +35,33 @@ class CQLJSONSchemaTransformer {
     columns: ICassandraColumn[],
     usedUdts?: ICassandraUserDefinedType[]
   }): Record<string, unknown> => {
-    const definitions = this.getJSONSchemaDefinitions(
-      params.usedUdts as ICassandraUserDefinedType[],
-    );
+    const definitions = params.usedUdts ? this.getJSONSchemaDefinitions(
+      params.usedUdts,
+    ) : null;
 
     const properties = params.columns.reduce((acc, { columnName, type }) => {
       return {
         ...acc,
-        [columnName]: this.fromCQLTypeToJSON(type),
+        [columnName]: this.fromCQLTypeToJSON(
+          type,
+          params.usedUdts as ICassandraUserDefinedType[],
+        ),
       };
     }, {});
 
     return {
-      [JSONSchemaKey.SCHEMA]: JSON_SCHEMA_USED_DIALECT,
-      [JSONSchemaKey.TITLE]: params.title,
+      ...(params.title ? {
+        [JSONSchemaKey.SCHEMA]: JSON_SCHEMA_USED_DIALECT,
+        [JSONSchemaKey.TITLE]: params.title,
+      } : {}),
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
       properties,
-      ...(params.usedUdts ? { definitions } : {}),
+      ...(params.usedUdts ? { [JSONSchemaKey.DEFINITIONS]: definitions } : {}),
     };
   };
 
   getJSONSchemaDefinitions(udts: ICassandraUserDefinedType[]): Record<string, unknown> {
-    return udts.reduce((acc, current) => ({
+    return udts?.reduce((acc, current) => ({
       ...acc,
       [current.typeName]: this.generateJSONSchema({
         columns: current.fields as ICassandraColumn[],
@@ -88,7 +94,7 @@ class CQLJSONSchemaTransformer {
 
     return {
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
-      [JSONSchemaKey.ITEMS]: cqlTypes.map(this.fromCQLTypeToJSON),
+      [JSONSchemaKey.ITEMS]: cqlTypes.map((type) => this.fromCQLTypeToJSON(type)),
     };
   };
 
@@ -96,7 +102,25 @@ class CQLJSONSchemaTransformer {
     return this.#cqlParserService.extractTypesFromWrapper(cqlWrappedType)[0];
   };
 
-  fromCQLTypeToJSON = (cqlType: string): Record<string, unknown> | undefined => {
+  getUDTJSONSchema = (
+    cqlType: string,
+    udts: ICassandraUserDefinedType[],
+  ): Record<string, string> => {
+    const existingUdt = udts.find(({ typeName }) => typeName === cqlType);
+
+    return {
+      [JSONSchemaKey.REF]: getFullUrl(
+        JSONSchemaKey.ROOT,
+        JSONSchemaKey.DEFINITIONS,
+        existingUdt?.typeName as string,
+      ),
+    };
+  };
+
+  fromCQLTypeToJSON = (
+    cqlType: string,
+    udts?: ICassandraUserDefinedType[],
+  ): Record<string, unknown> | undefined => {
     let resultType = cqlType;
 
     if (this.#cqlParserService.checkWrappedType(cqlType, CQLKeywordType.FROZEN)) {
@@ -125,6 +149,10 @@ class CQLJSONSchemaTransformer {
 
     if (jsonBaseType) {
       return { type: jsonBaseType };
+    }
+
+    if (udts) {
+      return this.getUDTJSONSchema(resultType, udts);
     }
   };
 }
