@@ -1,2 +1,7 @@
-export { CQLDataType } from './cql/cql.js';
+export {
+  CQLDataType,
+  CQLKeywordType,
+  CQLBasicDataType,
+  CQLCollectionDataType,
+} from './cql/cql.js';
 export { CassandraConnectionKey } from './connection/connection.js';

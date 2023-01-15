@@ -1,6 +1,8 @@
-interface IUserDefinedType {
+import { ICassandraColumn } from '../cassandra';
+
+interface ICassandraUserDefinedType {
   typeName: string;
-  fields: Record<string, string>[];
+  fields: Pick<ICassandraColumn, 'type' | 'columnName'>[];
 }
 
-export { type IUserDefinedType };
+export { type ICassandraUserDefinedType };

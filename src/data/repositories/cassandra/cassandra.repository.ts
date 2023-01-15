@@ -3,22 +3,24 @@ import {
   ICassandraTable,
   ICassandraColumn,
   ICassandraKeyspace,
-  IUserDefinedType,
+  ICassandraUserDefinedType,
 } from '~/common/model-types/model-types.js';
 
-interface ICassandraConstructor {
+interface ICassandraRepositoryConstructor {
   connection: Client;
 }
 
 class Cassandra {
   #connection: Client;
 
-  constructor({ connection }: ICassandraConstructor) {
+  constructor({ connection }: ICassandraRepositoryConstructor) {
     this.#connection = connection;
   }
 
+  static SYSTEM_TABLE = 'system_schema';
+
   getKeyspaces = async (): Promise<ICassandraKeyspace[]> => {
-    const query = 'select * from system_schema.keyspaces';
+    const query = `select keyspace_name from ${Cassandra.SYSTEM_TABLE}.keyspaces`;
 
     const { rows } = await this.#connection.execute(query);
 
@@ -28,7 +30,7 @@ class Cassandra {
   };
 
   getTables = async (keyspaceName?: string): Promise<ICassandraTable[]> => {
-    const query = 'select keyspace_name, table_name FROM system_schema.tables';
+    const query = `select keyspace_name, table_name FROM ${Cassandra.SYSTEM_TABLE}.tables`;
     const queryWithKeyspaceFiltering = `${query} where keyspace_name = ? allow filtering`;
 
     const { rows } = await this.#connection.execute(
@@ -46,7 +48,7 @@ class Cassandra {
     keyspaceName?: string;
     tableName?: string
   }): Promise<ICassandraColumn[]> => {
-    const query = 'select keyspace_name, table_name, type, kind FROM system_schema.columns';
+    const query = `select keyspace_name, table_name, column_name, type, kind FROM ${Cassandra.SYSTEM_TABLE}.columns`;
     const queryWithKeyspaceFiltering = `${query} where keyspace_name = ? allow filtering`;
     const queryWithTableFiltering = `${query} where table_name = ? allow filtering`;
     const queryWithKeyspaceTableFiltering = `${query} where keyspace_name = ? and table_name = ? allow filtering`;
@@ -81,21 +83,21 @@ class Cassandra {
     }));
   };
 
-  getUserDefinedTypes = async (keyspaceName?: string): Promise<IUserDefinedType[]> => {
-    const query = 'select type_name, field_names, field_types FROM system_schema.types';
-    const queryWithKeyspaceFiltering = `${query} where keyspace_name = ? allow filtering`;
+  getUserDefinedTypes = async (typeNames?: string[]): Promise<ICassandraUserDefinedType[]> => {
+    const query = `select type_name, field_names, field_types FROM ${Cassandra.SYSTEM_TABLE}.types`;
+    const queryWithTypeFiltering = `${query} where type_name in (?) allow filtering`;
 
     const { rows } = await this.#connection.execute(
-      keyspaceName ? queryWithKeyspaceFiltering : query,
-      [...(keyspaceName ? [keyspaceName] : [])],
+      typeNames ? queryWithTypeFiltering : query,
+      [...(typeNames ? [typeNames] : [])],
     );
 
     return rows.map(({ type_name, field_names, field_types }) => ({
       typeName: type_name,
-      fields: (field_names as string[]).reduce((acc, current, i) => ({
-        ...acc,
-        [current]: field_types[i],
-      }), [] as Record<string, string>[]),
+      fields: (field_names as string[]).map((fieldName, index) => ({
+        type: field_types[index],
+        columnName: fieldName,
+      })),
     }));
   };
 }

@@ -1,1 +1,1 @@
-export { type IUserDefinedType } from './udt.model-type.js';
+export { type ICassandraUserDefinedType } from './udt.model-type.js';

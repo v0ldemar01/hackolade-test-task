@@ -1,6 +1,6 @@
 export {
   type ICassandraTable,
-  type IUserDefinedType,
   type ICassandraColumn,
   type ICassandraKeyspace,
+  type ICassandraUserDefinedType,
 } from './cassandra/cassandra.js';

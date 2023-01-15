@@ -1,29 +1,23 @@
-enum CQLDataType {
+enum CQLBasicDataType {
   ASCII = 'ascii',
   BIGINT = 'bigint',
-  BLOB = 'blob',
   BOOLEAN = 'boolean',
   COUNTER = 'counter',
   DATE = 'date',
   DECIMAL = 'decimal',
   DOUBLE = 'double',
   FLOAT = 'float',
-  FROZEN = 'frozen',
   INET = 'inet',
   INT = 'int',
-  LIST = 'list',
-  MAP = 'map',
-  SET = 'set',
   SMALLINT = 'smallint',
   TEXT = 'text',
   TIME = 'time',
   TIMESTAMP = 'timestamp',
   TIMEUUID = 'timeuuid',
   TINYINT = 'tinyint',
-  TUPLE = 'tuple',
   UUID = 'uuid',
   VARCHAR = 'varchar',
   VARINT = 'varint',
 }
 
-export { CQLDataType };
+export { CQLBasicDataType };
