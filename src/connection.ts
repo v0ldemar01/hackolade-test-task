@@ -4,11 +4,9 @@ import { DbConnectionError } from '~/exceptions/exceptions.js';
 import {
   cassandraConnection as cassandraConnectionValidationSchema,
 } from '~/validation-schemas/validation-schemas.js';
-import { Logger } from './services/services.js';
+import { Logger } from '~/services/services.js';
 
-const initConnection = async (): Promise<Client | undefined> => {
-  const logger = new Logger();
-
+const initConnection = async ({ logger }: { logger: Logger }): Promise<Client | undefined> => {
   const connectionConfig = {
     localDataCenter: ENV.CASSANDRA.LOCAL_DATA_CENTER,
     authProvider: ENV.CASSANDRA.AUTH_PROVIDER,

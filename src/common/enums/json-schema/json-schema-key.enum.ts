@@ -1,5 +1,6 @@
 enum JSONSchemaKey {
   ROOT = '#',
+  REF = '$ref',
   TYPE = 'type',
   ITEMS = 'items',
   TITLE = 'title',

@@ -29,7 +29,7 @@ class Logger {
     winstonFormat.errors({ stack: true }),
     winstonFormat.timestamp({ format: LOGGER_TIMESTAMP_FORMAT }),
     winstonFormat.printf(
-      (info) => `[${info.timestamp}] ${info.level}: ${info.name} - ${info.stack?.replace('TypeError:', '') ?? info.message}`,
+      (info) => `[${info.timestamp}] ${info.level}: ${info.name ?? ''} - ${info.stack?.replace('TypeError:', '') ?? info.message}`,
     ),
     // winstonFormat.prettyPrint(),
   );
