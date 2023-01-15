@@ -30,7 +30,8 @@
   "dependencies": {
     "cassandra-driver": "4.6.4",
     "dotenv": "16.0.3",
-    "joi": "17.7.0"
+    "joi": "17.7.0",
+    "winston": "3.8.2"
   },
   "devDependencies": {
     "@ls-lint/ls-lint": "1.11.2",

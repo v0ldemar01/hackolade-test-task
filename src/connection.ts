@@ -4,8 +4,11 @@ import { DbConnectionError } from '~/exceptions/exceptions.js';
 import {
   cassandraConnection as cassandraConnectionValidationSchema,
 } from '~/validation-schemas/validation-schemas.js';
+import { Logger } from './services/services.js';
 
 const initConnection = async (): Promise<Client | undefined> => {
+  const logger = new Logger();
+
   const connectionConfig = {
     localDataCenter: ENV.CASSANDRA.LOCAL_DATA_CENTER,
     authProvider: ENV.CASSANDRA.AUTH_PROVIDER,
@@ -18,9 +21,12 @@ const initConnection = async (): Promise<Client | undefined> => {
   try {
     await cassandraConnectionValidationSchema.validateAsync(connectionConfig);
   } catch (err) {
-    throw new DbConnectionError({
+    logger.error(new DbConnectionError({
       message: (err as Error).message,
-    });
+      stack: (err as Error).stack,
+    }));
+
+    return;
   }
 
   try {
@@ -36,9 +42,12 @@ const initConnection = async (): Promise<Client | undefined> => {
 
     return client;
   } catch (err) {
-    throw new DbConnectionError({
+    logger.error(new DbConnectionError({
       message: (err as Error).message,
-    });
+      stack: (err as Error).stack,
+    }));
+
+    return;
   }
 };
 

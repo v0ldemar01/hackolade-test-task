@@ -1,0 +1,3 @@
+const LOGGER_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH:mm:ss:ms';
+
+export { LOGGER_TIMESTAMP_FORMAT };
