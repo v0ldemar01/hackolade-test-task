@@ -1,2 +1,2 @@
 '*': npm run lint:fs
-'src/**/*.ts': npm run lint:js && npm run lint:type
+'src/**/*.ts': npm run lint

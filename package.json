@@ -10,12 +10,11 @@
   },
   "scripts": {
     "lint:fs": "ls-lint",
-    "lint:type": "npx tsc --noEmit",
     "lint:js": "npx eslint \"src/**/*.ts\"",
-    "lint": "npm run lint:fs && npm run lint:js && npm run lint:type",
+    "lint": "npm run lint:fs && npm run lint:js",
     "clean": "rimraf build",
     "build": "npm run clean && tsc && tsc-alias -p tsconfig.json",
-    "start:dev": "node --loader ts-paths-esm-loader ./src/index.ts",
+    "start:dev": "node --watch --loader ts-paths-esm-loader ./src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,7 +28,9 @@
   },
   "homepage": "https://github.com/v0ldemar01/hackolade-test-task#readme",
   "dependencies": {
-    "dotenv": "16.0.3"
+    "cassandra-driver": "4.6.4",
+    "dotenv": "16.0.3",
+    "joi": "17.7.0"
   },
   "devDependencies": {
     "@ls-lint/ls-lint": "1.11.2",
