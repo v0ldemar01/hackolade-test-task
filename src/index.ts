@@ -2,6 +2,8 @@ import { Client } from 'cassandra-driver';
 import { initServices, Logger } from '~/services/services.js';
 import { initConnection } from '~/connection.js';
 import { initRepositories } from './data/repositories/repositories.js';
+import { writeFile } from './helpers/helpers.js';
+import { ENV } from './configs/env.config.js';
 
 (async (): Promise<void> => {
   const logger = new Logger();
@@ -19,5 +21,13 @@ import { initRepositories } from './data/repositories/repositories.js';
     title: tableName,
     ...data,
   });
-  logger.info(JSON.stringify(result, null, 4));
+
+  const contentStr = JSON.stringify(result, null, 2);
+
+  logger.info(contentStr);
+
+  await writeFile(
+    (new URL(ENV.FS.JSON_SCHEMA_SAVED_FILE, import.meta.url)).pathname,
+    contentStr,
+  );
 })();
