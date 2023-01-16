@@ -3,15 +3,28 @@ import {
   ICassandraUserDefinedType,
 } from '~/common/model-types/model-types.js';
 import {
-  Cassandra as CassandraRepository,
+  ICassandraRepository,
 } from '~/data/repositories/cassandra/cassandra.repository.js';
 
 interface ICassandraServiceConstructor {
-  cassandraRepository: CassandraRepository;
+  cassandraRepository: ICassandraRepository;
 }
 
-class Cassandra {
-  #cassandraRepository: CassandraRepository;
+interface ICassandraService {
+  getColumnsByTableName: (tableName: string) => Promise<ICassandraColumn[]>;
+  getUdts: (typeNames?: string[]) => Promise<ICassandraUserDefinedType[]>;
+  getTableColumnsWithUsedUdts: (tableName: string) => Promise<{
+    columns: ICassandraColumn[];
+    usedUdts: ICassandraUserDefinedType[]
+  }>;
+  getFirstRowFromTable: (params: {
+    keyspaceName: string;
+    tableName: string
+  }) => Promise<Record<string, unknown>>;
+}
+
+class Cassandra implements ICassandraService {
+  #cassandraRepository: ICassandraRepository;
 
   constructor({ cassandraRepository }: ICassandraServiceConstructor) {
     this.#cassandraRepository = cassandraRepository;
@@ -50,4 +63,4 @@ class Cassandra {
   };
 }
 
-export { Cassandra };
+export { Cassandra, type ICassandraService };

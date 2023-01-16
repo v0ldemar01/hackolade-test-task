@@ -32,4 +32,10 @@ const initServices = ({ cassandraRepository }: {
   };
 };
 
-export { initServices, Logger };
+export {
+  initServices,
+  Logger,
+  Cassandra,
+  CQLParser,
+  CQLJSONSchemaTransformer,
+};

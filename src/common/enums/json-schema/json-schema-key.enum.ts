@@ -9,6 +9,7 @@ enum JSONSchemaKey {
   PROPERTIES = 'properties',
   DEFINITIONS = 'definitions',
   UNIQUE_ITEMS = 'uniqueItems',
+  ADDITIONAL_PROPERTIES = 'additionalProperties',
 }
 
 export { JSONSchemaKey };

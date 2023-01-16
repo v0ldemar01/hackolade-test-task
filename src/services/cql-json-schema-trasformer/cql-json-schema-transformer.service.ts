@@ -5,15 +5,18 @@ import {
   CQLBasicDataType,
   JSONSchemaDataType,
   CQLCollectionDataType,
-} from '~/common/enums/enums.js';
+} from '../../common/enums/enums.js';
 import {
   ICassandraColumn,
   ICassandraUserDefinedType,
-} from '~/common/model-types/model-types.js';
-import { getFullUrl, isJsonString } from '~/helpers/helpers.js';
+} from '../../common/model-types/model-types.js';
+import {
+  getFullUrl,
+  isJsonString,
+} from '../../helpers/helpers.js';
 import {
   CQLParser as CQLParserService,
-} from '~/services/cql-parser/cql-parser.service.js';
+} from '../../services/cql-parser/cql-parser.service.js';
 import {
   JSON_SCHEMA_USED_DIALECT,
   MIN_ARRAY_ITEMS,
@@ -78,32 +81,48 @@ class CQLJSONSchemaTransformer {
     }), {});
   };
 
-  getListJSONSchema = (cqlWrappedType: string): Record<string, unknown> => {
+  getListJSONSchema = (
+    cqlWrappedType: string,
+    udts?: ICassandraUserDefinedType[],
+  ): Record<string, unknown> => {
     const cqlType = this.#cqlParserService.extractTypesFromWrapper(cqlWrappedType)[0];
 
     return {
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
-      [JSONSchemaKey.ITEMS]: this.fromCQLTypeToJSON({ cqlType }),
+      [JSONSchemaKey.ITEMS]: this.fromCQLTypeToJSON({ cqlType, udts }),
     };
   };
 
-  getSetJSONSchema = (cqlWrappedType: string): Record<string, unknown> => ({
-    ...this.getListJSONSchema(cqlWrappedType),
+  getSetJSONSchema = (
+    cqlWrappedType: string,
+    udts?: ICassandraUserDefinedType[],
+  ): Record<string, unknown> => ({
+    ...this.getListJSONSchema(cqlWrappedType, udts),
     [JSONSchemaKey.UNIQUE_ITEMS]: true,
     [JSONSchemaKey.MIN_ITEMS]: MIN_ARRAY_ITEMS,
   });
 
-  getMapJSONSchema = (cqlWrappedType: string): Record<string, unknown> => ({
+  getMapJSONSchema = (
+    cqlWrappedType: string,
+    udts?: ICassandraUserDefinedType[],
+  ): Record<string, unknown> => ({
     [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
-    [JSONSchemaKey.PROPERTIES]: this.#cqlParserService.extractTypesFromWrapper(cqlWrappedType)[1],
+    [JSONSchemaKey.ADDITIONAL_PROPERTIES]: this.fromCQLTypeToJSON({
+      udts,
+      cqlType: this.#cqlParserService.extractTypesFromWrapper(cqlWrappedType)[1],
+    }),
   });
 
-  getTupleJSONSchema = (cqlWrappedType: string): Record<string, unknown> => {
+  getTupleJSONSchema = (
+    cqlWrappedType: string,
+    udts?: ICassandraUserDefinedType[],
+  ): Record<string, unknown> => {
     const cqlTypes = this.#cqlParserService.extractTypesFromWrapper(cqlWrappedType);
 
     return {
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
       [JSONSchemaKey.ITEMS]: cqlTypes.map((cqlType) => this.fromCQLTypeToJSON({
+        udts,
         cqlType,
       })),
     };
@@ -149,19 +168,19 @@ class CQLJSONSchemaTransformer {
     }
 
     if (this.#cqlParserService.checkWrappedType(resultType, CQLCollectionDataType.LIST)) {
-      return this.getListJSONSchema(resultType);
+      return this.getListJSONSchema(resultType, params.udts);
     }
 
     if (this.#cqlParserService.checkWrappedType(resultType, CQLCollectionDataType.SET)) {
-      return this.getSetJSONSchema(resultType);
+      return this.getSetJSONSchema(resultType, params.udts);
     }
 
     if (this.#cqlParserService.checkWrappedType(resultType, CQLCollectionDataType.MAP)) {
-      return this.getMapJSONSchema(resultType);
+      return this.getMapJSONSchema(resultType, params.udts);
     }
 
     if (this.#cqlParserService.checkWrappedType(resultType, CQLDataType.TUPLE)) {
-      return this.getTupleJSONSchema(resultType);
+      return this.getTupleJSONSchema(resultType, params.udts);
     }
 
     if (

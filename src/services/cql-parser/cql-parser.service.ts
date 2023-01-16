@@ -4,9 +4,29 @@ import {
   CQLBasicDataType,
   CQLCollectionDataType,
   JSONSchemaDataType,
-} from '~/common/enums/enums.js';
+} from '../../common/enums/enums.js';
 
-class CQLParser {
+interface ICQLParserService {
+  checkWrappedType: (
+    type: string,
+    candidate:
+      | CQLKeywordType
+      | CQLDataType.TUPLE
+      | CQLCollectionDataType,
+  ) => boolean;
+  getWrappedType: (
+    types: CQLBasicDataType[],
+    wrapperType:
+      | CQLKeywordType
+      | CQLDataType.TUPLE
+      | CQLCollectionDataType,
+  ) => string;
+  extractTypesFromWrapper: (wrappedType: string) => string[];
+  fromCSQToJSON: (cqlBasicType: CQLBasicDataType) => JSONSchemaDataType;
+  findOutStringifiedType: <T>(candidate: T) => string;
+}
+
+class CQLParser implements ICQLParserService {
   checkWrappedType = (
     type: string,
     candidate:
@@ -49,7 +69,7 @@ class CQLParser {
     [CQLBasicDataType.VARINT]: JSONSchemaDataType.NUMBER,
   })[cqlBasicType];
 
-  findOutStringifiedType = (candidate: unknown): string => {
+  findOutStringifiedType = <T>(candidate: T): string => {
     const dictionary = {
       string: () => CQLBasicDataType.TEXT,
       number: () => CQLBasicDataType.INT,
@@ -66,4 +86,4 @@ class CQLParser {
   };
 }
 
-export { CQLParser };
+export { CQLParser, type ICQLParserService };

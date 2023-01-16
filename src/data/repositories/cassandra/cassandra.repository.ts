@@ -10,7 +10,21 @@ interface ICassandraRepositoryConstructor {
   connection: Client;
 }
 
-class Cassandra {
+interface ICassandraRepository {
+  getKeyspaces: () => Promise<ICassandraKeyspace[]>;
+  getTables: (keyspaceName?: string) => Promise<ICassandraTable[]>;
+  getTableColumns: (params: {
+    keyspaceName?: string;
+    tableName?: string
+  }) => Promise<ICassandraColumn[]>;
+  getUserDefinedTypes: (typeNames?: string[]) => Promise<ICassandraUserDefinedType[]>;
+  getFirstRowFromTable: (params: {
+    keyspaceName: string;
+    tableName: string
+  }) => Promise<Record<string, unknown>>;
+}
+
+class Cassandra implements ICassandraRepository {
   #connection: Client;
 
   constructor({ connection }: ICassandraRepositoryConstructor) {
@@ -112,4 +126,4 @@ class Cassandra {
   };
 }
 
-export { Cassandra };
+export { Cassandra, type ICassandraRepository };
