@@ -48,6 +48,22 @@ class CQLParser {
     [CQLBasicDataType.VARCHAR]: JSONSchemaDataType.STRING,
     [CQLBasicDataType.VARINT]: JSONSchemaDataType.NUMBER,
   })[cqlBasicType];
+
+  findOutStringifiedType = (candidate: unknown): string => {
+    const dictionary = {
+      string: () => CQLBasicDataType.TEXT,
+      number: () => CQLBasicDataType.INT,
+      object: (type?: string) => this.getWrappedType(
+        [this.findOutStringifiedType(type)] as CQLBasicDataType[],
+        CQLCollectionDataType.LIST,
+      ),
+    };
+    return dictionary[typeof candidate as 'string' | 'number' | 'object'](
+      typeof candidate === 'object'
+        ? (typeof (candidate as Array<unknown>)[0]) as string
+        : undefined,
+    );
+  };
 }
 
 export { CQLParser };

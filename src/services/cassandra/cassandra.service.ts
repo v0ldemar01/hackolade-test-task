@@ -41,6 +41,13 @@ class Cassandra {
       usedUdts,
     };
   };
+
+  getFirstRowFromTable = (params: {
+    keyspaceName: string;
+    tableName: string
+  }): Promise<Record<string, unknown>> => {
+    return this.#cassandraRepository.getFirstRowFromTable(params);
+  };
 }
 
 export { Cassandra };

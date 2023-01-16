@@ -15,10 +15,14 @@ import { ENV } from './configs/env.config.js';
   const { cassandra, cqlJSONSchemaTransformer } = initServices({ cassandraRepository });
 
   const tableName = 'users';
+  const keyspaceName = 'my_keyspace';
+
   const data = await cassandra.getTableColumnsWithUsedUdts(tableName);
+  const exampleRow = await cassandra.getFirstRowFromTable({ keyspaceName, tableName });
 
   const result = cqlJSONSchemaTransformer.generateJSONSchema({
     title: tableName,
+    exampleRow,
     ...data,
   });
 

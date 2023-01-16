@@ -30,7 +30,7 @@ class Cassandra {
   };
 
   getTables = async (keyspaceName?: string): Promise<ICassandraTable[]> => {
-    const query = `select keyspace_name, table_name FROM ${Cassandra.SYSTEM_TABLE}.tables`;
+    const query = `select keyspace_name, table_name from ${Cassandra.SYSTEM_TABLE}.tables`;
     const queryWithKeyspaceFiltering = `${query} where keyspace_name = ? allow filtering`;
 
     const { rows } = await this.#connection.execute(
@@ -48,7 +48,7 @@ class Cassandra {
     keyspaceName?: string;
     tableName?: string
   }): Promise<ICassandraColumn[]> => {
-    const query = `select keyspace_name, table_name, column_name, type, kind FROM ${Cassandra.SYSTEM_TABLE}.columns`;
+    const query = `select keyspace_name, table_name, column_name, type, kind from ${Cassandra.SYSTEM_TABLE}.columns`;
     const queryWithKeyspaceFiltering = `${query} where keyspace_name = ? allow filtering`;
     const queryWithTableFiltering = `${query} where table_name = ? allow filtering`;
     const queryWithKeyspaceTableFiltering = `${query} where keyspace_name = ? and table_name = ? allow filtering`;
@@ -84,7 +84,7 @@ class Cassandra {
   };
 
   getUserDefinedTypes = async (typeNames?: string[]): Promise<ICassandraUserDefinedType[]> => {
-    const query = `select type_name, field_names, field_types FROM ${Cassandra.SYSTEM_TABLE}.types`;
+    const query = `select type_name, field_names, field_types from ${Cassandra.SYSTEM_TABLE}.types`;
     const queryWithTypeFiltering = `${query} where type_name in (?) allow filtering`;
 
     const { rows } = await this.#connection.execute(
@@ -99,6 +99,16 @@ class Cassandra {
         columnName: fieldName,
       })),
     }));
+  };
+
+  getFirstRowFromTable = async (params: {
+    keyspaceName: string;
+    tableName: string
+  }): Promise<Record<string, unknown>> => {
+    const query = `select * from ${params.keyspaceName}.${params.tableName}`;
+    const result = await this.#connection.execute(query);
+
+    return result.first();
   };
 }
 

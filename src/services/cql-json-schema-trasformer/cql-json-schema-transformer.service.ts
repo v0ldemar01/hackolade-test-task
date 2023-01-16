@@ -10,7 +10,7 @@ import {
   ICassandraColumn,
   ICassandraUserDefinedType,
 } from '~/common/model-types/model-types.js';
-import { getFullUrl } from '~/helpers/helpers.js';
+import { getFullUrl, isJsonString } from '~/helpers/helpers.js';
 import {
   CQLParser as CQLParserService,
 } from '~/services/cql-parser/cql-parser.service.js';
@@ -33,19 +33,24 @@ class CQLJSONSchemaTransformer {
   generateJSONSchema = (params: {
     title?: string,
     columns: ICassandraColumn[],
+    exampleRow?: Record<string, unknown>
     usedUdts?: ICassandraUserDefinedType[]
   }): Record<string, unknown> => {
     const definitions = params.usedUdts ? this.getJSONSchemaDefinitions(
       params.usedUdts,
+      params.exampleRow,
     ) : null;
 
     const properties = params.columns.reduce((acc, { columnName, type }) => {
       return {
         ...acc,
-        [columnName]: this.fromCQLTypeToJSON(
-          type,
-          params.usedUdts as ICassandraUserDefinedType[],
-        ),
+        [columnName]: this.fromCQLTypeToJSON({
+          cqlType: type,
+          exampleRow: params.exampleRow
+            ? params.exampleRow[columnName]
+            : params.exampleRow,
+          udts: params.usedUdts as ICassandraUserDefinedType[],
+        }),
       };
     }, {});
 
@@ -55,28 +60,32 @@ class CQLJSONSchemaTransformer {
         [JSONSchemaKey.TITLE]: params.title,
       } : {}),
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
-      properties,
+      [JSONSchemaKey.PROPERTIES]: properties,
       ...(params.usedUdts ? { [JSONSchemaKey.DEFINITIONS]: definitions } : {}),
     };
   };
 
-  getJSONSchemaDefinitions(udts: ICassandraUserDefinedType[]): Record<string, unknown> {
+  getJSONSchemaDefinitions = (
+    udts: ICassandraUserDefinedType[],
+    exampleRow?: Record<string, unknown>,
+  ): Record<string, unknown> => {
     return udts?.reduce((acc, current) => ({
       ...acc,
       [current.typeName]: this.generateJSONSchema({
         columns: current.fields as ICassandraColumn[],
+        exampleRow: (exampleRow ? exampleRow[current.typeName] : exampleRow) as Record<string, unknown>,
       }),
     }), {});
-  }
+  };
 
-  getListJSONSchema(cqlWrappedType: string): Record<string, unknown> {
+  getListJSONSchema = (cqlWrappedType: string): Record<string, unknown> => {
     const cqlType = this.#cqlParserService.extractTypesFromWrapper(cqlWrappedType)[0];
 
     return {
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
-      [JSONSchemaKey.ITEMS]: this.fromCQLTypeToJSON(cqlType),
+      [JSONSchemaKey.ITEMS]: this.fromCQLTypeToJSON({ cqlType }),
     };
-  }
+  };
 
   getSetJSONSchema = (cqlWrappedType: string): Record<string, unknown> => ({
     ...this.getListJSONSchema(cqlWrappedType),
@@ -94,7 +103,9 @@ class CQLJSONSchemaTransformer {
 
     return {
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
-      [JSONSchemaKey.ITEMS]: cqlTypes.map((type) => this.fromCQLTypeToJSON(type)),
+      [JSONSchemaKey.ITEMS]: cqlTypes.map((cqlType) => this.fromCQLTypeToJSON({
+        cqlType,
+      })),
     };
   };
 
@@ -117,14 +128,24 @@ class CQLJSONSchemaTransformer {
     };
   };
 
-  fromCQLTypeToJSON = (
+  getStringifyJSONSchema = (exampleRowObj: Record<string, unknown>): Record<string, unknown> => {
+    return this.generateJSONSchema({
+      columns: Object.entries(exampleRowObj).map(([key, value]) => ({
+        columnName: key,
+        type: this.#cqlParserService.findOutStringifiedType(value),
+      })) as ICassandraColumn[],
+    });
+  };
+
+  fromCQLTypeToJSON = (params: {
     cqlType: string,
     udts?: ICassandraUserDefinedType[],
-  ): Record<string, unknown> | undefined => {
-    let resultType = cqlType;
+    exampleRow?: unknown
+  }): Record<string, unknown> | undefined => {
+    let resultType = params.cqlType;
 
-    if (this.#cqlParserService.checkWrappedType(cqlType, CQLKeywordType.FROZEN)) {
-      resultType = this.getFrozenJSONSchema(cqlType);
+    if (this.#cqlParserService.checkWrappedType(resultType, CQLKeywordType.FROZEN)) {
+      resultType = this.getFrozenJSONSchema(resultType);
     }
 
     if (this.#cqlParserService.checkWrappedType(resultType, CQLCollectionDataType.LIST)) {
@@ -143,6 +164,14 @@ class CQLJSONSchemaTransformer {
       return this.getTupleJSONSchema(resultType);
     }
 
+    if (
+      params.exampleRow &&
+      (resultType === CQLBasicDataType.TEXT
+        || resultType === CQLBasicDataType.VARCHAR)
+      && isJsonString(params.exampleRow?.toString())
+    ) {
+        return this.getStringifyJSONSchema(JSON.parse(params.exampleRow?.toString()));
+      }
     const jsonBaseType = this.#cqlParserService.fromCSQToJSON(
       resultType as CQLBasicDataType,
     );
@@ -151,8 +180,8 @@ class CQLJSONSchemaTransformer {
       return { type: jsonBaseType };
     }
 
-    if (udts) {
-      return this.getUDTJSONSchema(resultType, udts);
+    if (params.udts) {
+      return this.getUDTJSONSchema(resultType, params.udts);
     }
   };
 }
