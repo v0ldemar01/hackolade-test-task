@@ -14,8 +14,8 @@ import { ENV } from './configs/env.config.js';
   });
   const { cassandra, cqlJSONSchemaTransformer } = initServices({ cassandraRepository });
 
-  const tableName = 'users';
-  const keyspaceName = 'my_keyspace';
+  const tableName = ENV.CASSANDRA.TABLE_NAME;
+  const keyspaceName = ENV.CASSANDRA.KEYSPACE_NAME;
 
   const data = await cassandra.getTableColumnsWithUsedUdts(tableName);
   const exampleRow = await cassandra.getFirstRowFromTable({ keyspaceName, tableName });
