@@ -13,15 +13,5 @@
   ```js
     npm run install
   ```
-3. The project uses typescript with esm support. There is no oficial solution for handling path mapping from ts-node. So dependency ```ts-paths-esm-loader``` is the partial try of solution. But, something else should be changed. Find this package in ```node_modules```, at file ```resolverFactory.js``` include these code lines:
-```js
-
-if (specifier.endsWith('.js')) {
-  const trimmed = specifier.substring(0, specifier.length - 3)
-  const match = matchPath(trimmed)
-  if (match) return resolveTs(pathToFileURL(`${match}.js`).href, ctx, defaultResolve)
-}
-return resolveTs(specifier, ctx, defaultResolve)'
-```
-
-## *These actions are only suitable for the test sample, not for the production version!*
+3. PS: This app uses ```typescript``` with ```esm``` support. There is no oficial solution for handling path mapping from ```ts-node```. So dependency ```ts-paths-esm-loader``` is the partial try of solution. With ```patch-package``` was created the diff with solves the issue of esm modules of .js file extensions.
+The [issue](https://github.com/luanglopes/ts-paths-esm-loader/issues/12)
